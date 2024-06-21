@@ -13,10 +13,6 @@ declare(strict_types=1);
 
 namespace GsTYPO3\CorePatches\Config;
 
-use GsTYPO3\CorePatches\Config;
-use JsonSerializable;
-
-interface ConfigAwareInterface extends JsonSerializable
+final class PreferredInstallChanged extends Packages
 {
-    public function getConfig(): Config;
 }

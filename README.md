@@ -2,11 +2,12 @@
 
 [![Packagist Version](https://img.shields.io/packagist/v/gilbertsoft/typo3-core-patches)](https://packagist.org/packages/gilbertsoft/typo3-core-patches)
 [![Packagist PHP Version Support](https://img.shields.io/packagist/php-v/gilbertsoft/typo3-core-patches)](https://packagist.org/packages/gilbertsoft/typo3-core-patches)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/gilbertsoft/typo3-core-patches)](https://packagist.org/packages/gilbertsoft/typo3-core-patches)
 [![GitHub issues](https://img.shields.io/github/issues/GsTYPO3/core-patches)](https://github.com/GsTYPO3/core-patches/issues)
 [![GitHub forks](https://img.shields.io/github/forks/GsTYPO3/core-patches)](https://github.com/GsTYPO3/core-patches/network)
 [![GitHub stars](https://img.shields.io/github/stars/GsTYPO3/core-patches)](https://github.com/GsTYPO3/core-patches/stargazers)
 [![GitHub license](https://img.shields.io/github/license/GsTYPO3/core-patches)](https://github.com/GsTYPO3/core-patches/blob/main/LICENSE)
-[![GitHub build](https://img.shields.io/github/workflow/status/GsTYPO3/core-patches/Continuous%20Integration%20(CI))](https://github.com/GsTYPO3/core-patches/actions/workflows/continuous-integration.yml)
+[![GitHub build](https://img.shields.io/github/actions/workflow/status/GsTYPO3/core-patches/continuous-integration.yml?branch=main)](https://github.com/GsTYPO3/core-patches/actions/workflows/continuous-integration.yml)
 [![Coveralls](https://img.shields.io/coveralls/github/GsTYPO3/core-patches)](https://coveralls.io/github/GsTYPO3/core-patches)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](https://github.com/GsTYPO3/core-patches/blob/main/CODE_OF_CONDUCT.md)
 
@@ -118,18 +119,52 @@ next example:
 composer typo3:patch:apply https://review.typo3.org/c/Packages/TYPO3.CMS/+/12345
 ```
 
+## Verification of the branch
+
+The plugin compares the current installed core version with the target branch
+of the patch to install and asks for confirmation to anyway try to apply the
+patch to the different version.
+
+To disabled the branch check for this project, run:
+
+```bash
+composer config extra.gilbertsoft/typo3-core-patches.ignore-branch true
+```
+
 ## Detection of merged changes on update or install
 
 When running `composer update` or `composer install`, the plugin detects changes
 that already exist in the version being installed and suggests removing them. If
 you run Composer with the `--no-interaction` option, the patches are always
-removed.
+preserved. This can be changed by the config `force-tidy-patches` see bellow.
 
 Errors may occur if you use the source-dist of packages, which can be solved by
 adding the `config.discard-changes` configuration option to your `composer.json`,
 see <https://getcomposer.org/doc/06-config.md#discard-changes>. Run e.g.
 `composer config discard-changes true` to add the configuration to your
 `composer.json`.
+
+If a CI environment is detected, the detection of merged changes is skipped by
+default. To change this behavior and enable the detection again, run:
+
+```bash
+composer config extra.gilbertsoft/typo3-core-patches.force-tidy-patches true
+```
+
+To disable the detection of merged changes completely, run:
+
+```bash
+composer config extra.gilbertsoft/typo3-core-patches.disable-tidy-patches true
+```
+
+## CI detection
+
+The plugin tries to detect CI environments and changes its default behavior
+while running in a CI pipeline. It's possible to override the detection by
+setting an environment variable:
+
+- Set `GS_CI=1` to force CI mode
+- Set `GS_CI=0` to disable CI mode
 
 ## Feedback / Bug reports / Contribution
 

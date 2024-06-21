@@ -22,6 +22,7 @@ env:
   COMPOSER_FLAGS: --ansi --no-interaction --no-progress
   COMPOSER_INSTALL_FLAGS: --prefer-dist
   COMPOSER_UPDATE_FLAGS: ''
+  GS_CI: 0
 
 jobs:
   validation:
@@ -30,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -44,11 +45,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -74,7 +75,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -88,11 +89,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -125,7 +126,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -139,11 +140,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -171,7 +172,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -185,11 +186,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -211,7 +212,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -225,11 +226,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -251,7 +252,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -265,11 +266,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -291,7 +292,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -305,11 +306,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-latest-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -358,7 +359,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -372,11 +373,11 @@ jobs:
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependencies }}-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -454,25 +455,25 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           coverage: xdebug
           extensions: intl, zip
-          ini-values: memory_limit=-1, error_reporting=E_ALL, display_errors=On
+          ini-values: memory_limit=-1, error_reporting=E_ALL, display_errors=On, xdebug.mode="develop,coverage"
           php-version: ${{ matrix.php-version }}
           tools: composer
 
       - name: Composer Cache Vars
         id: composer-cache-vars
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-          echo "::set-output name=timestamp::$(date +"%s")"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.composer-cache-vars.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependencies }}-${{ steps.composer-cache-vars.outputs.timestamp }}
@@ -524,10 +525,10 @@ jobs:
           composer global exec php-coveralls -- --coverage_clover=var/log/clover.xml -vvv --json_path=var/log/coveralls-upload.json
 
       - name: Archive Logs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: logs
+          name: logs-${{ matrix.php-version }}-${{ matrix.dependencies }}
           path: var/log
           if-no-files-found: ignore
           retention-days: 5

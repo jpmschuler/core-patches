@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace GsTYPO3\CorePatches\Config;
 
-use GsTYPO3\CorePatches\Config;
 use GsTYPO3\CorePatches\Exception\UnexpectedValueException;
 use Iterator;
 use IteratorAggregate;
@@ -21,7 +20,7 @@ use IteratorAggregate;
 /**
  * @implements IteratorAggregate<string, string>
  */
-final class PreferredInstall implements ConfigAwareInterface, PersistenceInterface, IteratorAggregate
+final class PreferredInstall implements PersistenceInterface, IteratorAggregate
 {
     /**
      * @var string
@@ -38,8 +37,6 @@ final class PreferredInstall implements ConfigAwareInterface, PersistenceInterfa
      */
     public const METHOD_AUTO = 'auto';
 
-    private Config $config;
-
     /**
      * @var array<string, string>
      */
@@ -49,11 +46,8 @@ final class PreferredInstall implements ConfigAwareInterface, PersistenceInterfa
      * @param iterable<string, string> $preferredInstall
      */
     public function __construct(
-        Config $config,
         iterable $preferredInstall = []
     ) {
-        $this->config = $config;
-
         $preferredInstallArray = [];
 
         foreach ($preferredInstall as $packageName => $installMethod) {
@@ -80,24 +74,19 @@ final class PreferredInstall implements ConfigAwareInterface, PersistenceInterfa
         return $this->preferredInstall === [];
     }
 
-    public function remove(string $packageName): ?string
+    /**
+     * @return array<string, string>|null
+     */
+    public function remove(string $packageName): ?array
     {
         if (isset($this->preferredInstall[$packageName])) {
             $installMethod = $this->preferredInstall[$packageName];
-            $this->preferredInstall[$packageName] = '';
+            unset($this->preferredInstall[$packageName]);
 
-            return $installMethod;
+            return [$packageName => $installMethod];
         }
 
         return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getConfig(): Config
-    {
-        return $this->config;
     }
 
     /**

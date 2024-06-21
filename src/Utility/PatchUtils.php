@@ -17,6 +17,7 @@ use Composer\Composer;
 use Composer\IO\IOInterface;
 use Composer\Package\BasePackage;
 use Composer\Semver\Constraint\MatchAllConstraint;
+use GsTYPO3\CorePatches\Config\Patches;
 use GsTYPO3\CorePatches\Exception\InvalidPatchException;
 use GsTYPO3\CorePatches\Exception\NoPatchException;
 
@@ -30,6 +31,16 @@ final class PatchUtils
     {
         $this->composer = $composer;
         $this->io = $io;
+    }
+
+    public function getPatchFileName(string $destination, string $packageName, int $numericId): string
+    {
+        return sprintf(
+            '%s/%s-review-%s.patch',
+            $destination,
+            str_replace('/', '-', $packageName),
+            $numericId
+        );
     }
 
     public function patchIsPartOfChange(string $patchFileName, int $numericId): bool
@@ -65,13 +76,13 @@ final class PatchUtils
     }
 
     /**
-     * @param  array<int, int>                      $numericIds the numeric IDs of the patches to remove
-     * @param  array<string, array<string, string>> $patches    the available patches
-     * @return array<string, array<string, string>> the removed patches
+     * @param  array<int, int> $numericIds the numeric IDs of the patches to remove
+     * @param  Patches         $patches    the available patches
+     * @return Patches         the removed patches
      */
-    public function remove(array $numericIds, array $patches): array
+    public function remove(array $numericIds, Patches $patches): Patches
     {
-        $patchesRemoved = [];
+        $patchesRemoved = new Patches();
 
         foreach ($numericIds as $numericId) {
             foreach ($patches as $packageName => $packagePatches) {
@@ -79,10 +90,7 @@ final class PatchUtils
                     if ($this->patchIsPartOfChange($patchFileName, $numericId)) {
                         $this->io->write(sprintf('  - Removing patch <info>%s</info>', $patchFileName));
 
-                        $patchesRemoved[$packageName] = array_merge(
-                            $patchesRemoved[$packageName] ?? [],
-                            [$subject => $patchFileName]
-                        );
+                        $patchesRemoved->add($packageName, [$subject => $patchFileName]);
 
                         unlink($patchFileName);
                     }
@@ -94,13 +102,13 @@ final class PatchUtils
     }
 
     /**
-     * @param  array<int, int>                      $numericIds the numeric IDs of the patches to remove
-     * @param  array<string, array<string, string>> $patches    the available patches
-     * @return array<string, array<string, string>> the removed patches
+     * @param  array<int, int> $numericIds the numeric IDs of the patches to remove
+     * @param  Patches         $patches    the available patches
+     * @return Patches         the removed patches
      */
-    public function prepareRemove(array $numericIds, array $patches): array
+    public function prepareRemove(array $numericIds, Patches $patches): Patches
     {
-        $patchesRemoved = [];
+        $patchesRemoved = new Patches();
 
         foreach ($numericIds as $numericId) {
             foreach ($patches as $packageName => $packagePatches) {
@@ -108,10 +116,7 @@ final class PatchUtils
                     if ($this->patchIsPartOfChange($patchFileName, $numericId)) {
                         $this->io->write(sprintf('  - Removing patch <info>%s</info>', $patchFileName));
 
-                        $patchesRemoved[$packageName] = array_merge(
-                            $patchesRemoved[$packageName] ?? [],
-                            [$subject => $patchFileName]
-                        );
+                        $patchesRemoved->add($packageName, [$subject => $patchFileName]);
 
                         file_put_contents(
                             $patchFileName,
@@ -226,12 +231,7 @@ final class PatchUtils
 
         foreach ($patches as $packageName => $chunks) {
             $content = implode('', $chunks);
-            $patchFileName = sprintf(
-                '%s/%s-review-%s.patch',
-                $destination,
-                str_replace('/', '-', $packageName),
-                $numericId
-            );
+            $patchFileName = $this->getPatchFileName($destination, $packageName, $numericId);
             $this->io->write(sprintf('  - Creating patch <info>%s</info>', $patchFileName));
             file_put_contents($patchFileName, $content);
             $composerChanges[$packageName] = [$subject => $patchFileName];

@@ -35,7 +35,6 @@
 	],
 	"config": {
 		"allow-plugins": {
-			"cweagans/composer-patches": true,
 			"ergebnis/composer-normalize": true,
 			"gilbertsoft/typo3-core-patches": true,
 			"typo3/class-alias-loader": true,
@@ -45,7 +44,12 @@
 	},
 	"extra": {
 		"gilbertsoft/typo3-core-patches": {
-			"ignore-branch": true
+			"applied-changes": [73022]
+		},
+		"patches": {
+			"typo3/cms-core": {
+				"Avoid service listing in ext:reports": "patches/typo3-cms-core-review-73022.patch"
+			}
 		}
 	}
 }

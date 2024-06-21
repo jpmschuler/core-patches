@@ -13,14 +13,15 @@ declare(strict_types=1);
 
 namespace GsTYPO3\CorePatches;
 
+use Composer\Config\ConfigSourceInterface;
 use Composer\Config\JsonConfigSource;
 use Composer\Factory;
 use Composer\Json\JsonFile;
 use GsTYPO3\CorePatches\Config\Changes;
-use GsTYPO3\CorePatches\Config\Packages;
 use GsTYPO3\CorePatches\Config\Patches;
 use GsTYPO3\CorePatches\Config\PersistenceInterface;
 use GsTYPO3\CorePatches\Config\PreferredInstall;
+use GsTYPO3\CorePatches\Config\PreferredInstallChanged;
 
 final class Config implements PersistenceInterface
 {
@@ -52,21 +53,45 @@ final class Config implements PersistenceInterface
     /**
      * @var string
      */
-    private const CHANGES = 'applied-changes';
+    private const PLUGIN_CHANGES = 'applied-changes';
 
     /**
      * @var string
      */
-    private const PREFERRED_INSTALL_CHANGED = 'preferred-install-changed';
+    private const PLUGIN_PREFERRED_INSTALL_CHANGED = 'preferred-install-changed';
 
     /**
      * @var string
      */
-    private const PATCH_DIRECTORY = 'patch-directory';
+    private const PLUGIN_PATCH_DIRECTORY = 'patch-directory';
+
+    /**
+     * @var string
+     */
+    private const DEFAULT_PATCH_DIRECTORY = 'patches';
+
+    /**
+     * @var string
+     */
+    private const PLUGIN_IGNORE_BRANCH = 'ignore-branch';
+
+    /**
+     * @var string
+     */
+    private const PLUGIN_DISABLE_TIDY_PATCHES = 'disable-tidy-patches';
+
+    /**
+     * @var string
+     */
+    private const PLUGIN_FORCE_TIDY_PATCHES = 'force-tidy-patches';
+
+    private JsonFile $jsonFile;
+
+    private ConfigSourceInterface $configSource;
 
     private Changes $changes;
 
-    private Packages $preferredInstallChanged;
+    private PreferredInstallChanged $preferredInstallChanged;
 
     private string $patchDirectory = '';
 
@@ -74,12 +99,23 @@ final class Config implements PersistenceInterface
 
     private Patches $patches;
 
-    public function __construct()
-    {
-        $this->changes = new Changes($this);
-        $this->preferredInstallChanged = new Packages($this);
-        $this->preferredInstall = new PreferredInstall($this);
-        $this->patches = new Patches($this);
+    private bool $ignoreBranch = \false;
+
+    private bool $disableTidyPatches = \false;
+
+    private bool $forceTidyPatches = \false;
+
+    public function __construct(
+        ?JsonFile $jsonFile = null,
+        ?ConfigSourceInterface $configSource = null
+    ) {
+        $this->jsonFile = $jsonFile ?? new JsonFile(Factory::getComposerFile());
+        $this->configSource = $configSource ?? new JsonConfigSource($this->jsonFile);
+
+        $this->changes = new Changes();
+        $this->preferredInstallChanged = new PreferredInstallChanged();
+        $this->preferredInstall = new PreferredInstall();
+        $this->patches = new Patches();
     }
 
     public function getChanges(): Changes
@@ -87,7 +123,7 @@ final class Config implements PersistenceInterface
         return $this->changes;
     }
 
-    public function getPreferredInstallChanged(): Packages
+    public function getPreferredInstallChanged(): PreferredInstallChanged
     {
         return $this->preferredInstallChanged;
     }
@@ -95,7 +131,7 @@ final class Config implements PersistenceInterface
     public function getPatchDirectory(): string
     {
         if ($this->patchDirectory === '') {
-            return 'patches';
+            return self::DEFAULT_PATCH_DIRECTORY;
         }
 
         return $this->patchDirectory;
@@ -104,6 +140,18 @@ final class Config implements PersistenceInterface
     public function setPatchDirectory(string $patchDirectory): self
     {
         $this->patchDirectory = $patchDirectory;
+
+        return $this;
+    }
+
+    public function getIgnoreBranch(): bool
+    {
+        return $this->ignoreBranch;
+    }
+
+    public function setIgnoreBranch(bool $ignoreBranch): self
+    {
+        $this->ignoreBranch = $ignoreBranch;
 
         return $this;
     }
@@ -118,22 +166,58 @@ final class Config implements PersistenceInterface
         return $this->patches;
     }
 
-    private function isEmpty(): bool
+    public function getDisableTidyPatches(): bool
     {
-        /** @noRector \Rector\EarlyReturn\Rector */
-        return $this->changes->isEmpty()
-            && $this->preferredInstallChanged->isEmpty()
-            && $this->patchDirectory === ''
-        ;
+        return $this->disableTidyPatches;
     }
 
-    public function load(?JsonFile $jsonFile = null): self
+    public function setDisableTidyPatches(bool $disableTidyPatches): self
     {
-        if ($jsonFile === null) {
-            $jsonFile = new JsonFile(Factory::getComposerFile());
+        $this->disableTidyPatches = $disableTidyPatches;
+
+        return $this;
+    }
+
+    public function getForceTidyPatches(): bool
+    {
+        return $this->forceTidyPatches;
+    }
+
+    public function setForceTidyPatches(bool $forceTidyPatches): self
+    {
+        $this->forceTidyPatches = $forceTidyPatches;
+
+        return $this;
+    }
+
+    private function isEmpty(): bool
+    {
+        if (!$this->changes->isEmpty()) {
+            return false;
         }
 
-        if (!is_array($config = $jsonFile->read())) {
+        if (!$this->preferredInstallChanged->isEmpty()) {
+            return false;
+        }
+
+        if ($this->patchDirectory !== '') {
+            return false;
+        }
+
+        if ($this->ignoreBranch) {
+            return false;
+        }
+
+        if ($this->disableTidyPatches) {
+            return false;
+        }
+
+        return !$this->forceTidyPatches;
+    }
+
+    public function load(): self
+    {
+        if (!is_array($config = $this->jsonFile->read())) {
             $config = [];
         }
 
@@ -142,14 +226,8 @@ final class Config implements PersistenceInterface
         return $this;
     }
 
-    public function save(?JsonFile $jsonFile = null): self
+    public function save(): self
     {
-        if ($jsonFile === null) {
-            $jsonFile = new JsonFile(Factory::getComposerFile());
-        }
-
-        $jsonConfigSource = new JsonConfigSource($jsonFile);
-
         // Save preferred-install
         foreach ($this->preferredInstall as $packageName => $installMethod) {
             $name = sprintf(
@@ -159,9 +237,9 @@ final class Config implements PersistenceInterface
             );
 
             if ($installMethod === '') {
-                $jsonConfigSource->removeConfigSetting($name);
+                $this->configSource->removeConfigSetting($name);
             } else {
-                $jsonConfigSource->addConfigSetting($name, $installMethod);
+                $this->configSource->addConfigSetting($name, $installMethod);
             }
         }
 
@@ -173,9 +251,9 @@ final class Config implements PersistenceInterface
         );
 
         if ($this->patches->isEmpty()) {
-            $jsonConfigSource->removeProperty($name);
+            $this->configSource->removeProperty($name);
         } else {
-            $jsonConfigSource->addProperty($name, $this->patches);
+            $this->configSource->addProperty($name, $this->patches);
         }
 
         // Save plugin configuration
@@ -186,14 +264,14 @@ final class Config implements PersistenceInterface
         );
 
         if ($this->isEmpty()) {
-            $jsonConfigSource->removeProperty($name);
+            $this->configSource->removeProperty($name);
         } else {
-            $jsonConfigSource->addProperty($name, $this);
+            $this->configSource->addProperty($name, $this);
         }
 
-        // Rewrite configuration to enforce correct formating
-        if (is_array($rawConfig = $jsonFile->read())) {
-            $jsonFile->write($rawConfig);
+        // Rewrite configuration to enforce correct formatting
+        if (is_array($rawConfig = $this->jsonFile->read())) {
+            $this->jsonFile->write($rawConfig);
         }
 
         return $this;
@@ -212,15 +290,27 @@ final class Config implements PersistenceInterface
         $config = [];
 
         if (!$this->changes->isEmpty()) {
-            $config[self::CHANGES] = $this->changes;
+            $config[self::PLUGIN_CHANGES] = $this->changes;
         }
 
         if (!$this->preferredInstallChanged->isEmpty()) {
-            $config[self::PREFERRED_INSTALL_CHANGED] = $this->preferredInstallChanged;
+            $config[self::PLUGIN_PREFERRED_INSTALL_CHANGED] = $this->preferredInstallChanged;
         }
 
-        if ($this->patchDirectory !== '') {
-            $config[self::PATCH_DIRECTORY] = $this->patchDirectory;
+        if ($this->patchDirectory !== '' && $this->patchDirectory !== self::DEFAULT_PATCH_DIRECTORY) {
+            $config[self::PLUGIN_PATCH_DIRECTORY] = $this->patchDirectory;
+        }
+
+        if ($this->ignoreBranch) {
+            $config[self::PLUGIN_IGNORE_BRANCH] = $this->ignoreBranch;
+        }
+
+        if ($this->disableTidyPatches) {
+            $config[self::PLUGIN_DISABLE_TIDY_PATCHES] = $this->disableTidyPatches;
+        }
+
+        if ($this->forceTidyPatches) {
+            $config[self::PLUGIN_FORCE_TIDY_PATCHES] = $this->forceTidyPatches;
         }
 
         return $config;
@@ -258,23 +348,41 @@ final class Config implements PersistenceInterface
             $packageConfig = [];
         }
 
-        if (!is_array($changes = $packageConfig[self::CHANGES] ?? null)) {
+        if (!is_array($changes = $packageConfig[self::PLUGIN_CHANGES] ?? null)) {
             $changes = [];
         }
 
         $this->changes->jsonUnserialize($changes);
 
-        if (!is_array($preferredInstallChanged = $packageConfig[self::PREFERRED_INSTALL_CHANGED] ?? null)) {
+        if (!is_array($preferredInstallChanged = $packageConfig[self::PLUGIN_PREFERRED_INSTALL_CHANGED] ?? null)) {
             $preferredInstallChanged = [];
         }
 
         $this->preferredInstallChanged->jsonUnserialize($preferredInstallChanged);
 
-        if (!is_string($patchDirectory = $packageConfig[self::PATCH_DIRECTORY] ?? null)) {
+        if (!is_string($patchDirectory = $packageConfig[self::PLUGIN_PATCH_DIRECTORY] ?? null)) {
             $patchDirectory = '';
         }
 
         $this->patchDirectory = $patchDirectory;
+
+        if (!is_bool($ignoreBranch = $packageConfig[self::PLUGIN_IGNORE_BRANCH] ?? null)) {
+            $ignoreBranch = false;
+        }
+
+        $this->ignoreBranch = $ignoreBranch;
+
+        if (!is_bool($disableTidyPatches = $packageConfig[self::PLUGIN_DISABLE_TIDY_PATCHES] ?? null)) {
+            $disableTidyPatches = false;
+        }
+
+        $this->disableTidyPatches = $disableTidyPatches;
+
+        if (!is_bool($forceTidyPatches = $packageConfig[self::PLUGIN_FORCE_TIDY_PATCHES] ?? null)) {
+            $forceTidyPatches = false;
+        }
+
+        $this->forceTidyPatches = $forceTidyPatches;
 
         return $this;
     }
